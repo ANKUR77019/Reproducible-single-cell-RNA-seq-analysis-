@@ -1,0 +1,119 @@
+import csv
+from pathlib import Path
+
+configfile: "config/config.yaml"
+
+with open("config/samples.tsv", newline="") as handle:
+    rows = list(csv.DictReader(handle, delimiter="\t"))
+
+SAMPLES = [row["sample"] for row in rows]
+wildcard_constraints:
+    sample = r"[^/]+" 
+SAMPLE_INFO = {row["sample"]: row for row in rows}
+
+if not SAMPLES or len(SAMPLES) != len(set(SAMPLES)):
+    raise ValueError("Sample sheet is empty or contains duplicate sample names.")
+
+FASTQ_DIR = Path(config["fastq_dir"])
+INDEX = config["reference_index"]
+T2G = config["transcript_to_gene"]
+THREADS = int(config.get("threads", 2))
+MEMORY = config.get("memory", "2G")
+
+def sample_fastqs(sample):
+    row = SAMPLE_INFO[sample]
+    files = [
+        str(FASTQ_DIR / row["r1_l001"]),
+        str(FASTQ_DIR / row["r2_l001"]),
+        str(FASTQ_DIR / row["r1_l002"]),
+        str(FASTQ_DIR / row["r2_l002"]),
+    ]
+    missing = [f for f in files if not Path(f).is_file()]
+    if missing:
+        raise ValueError(f"Missing FASTQ file(s) for {sample}: {missing}")
+    return files
+
+rule all:
+    input:
+        "results/fastqc/multiqc/multiqc_report.html",
+        expand("results/quantification/{sample}/counts_filtered/cells_x_genes.mtx",
+               sample=SAMPLES),
+        expand("results/fastq_analysis/{sample}/analysis_summary.txt",
+               sample=SAMPLES),
+        expand("results/fastq_analysis/{sample}/pbmc_fastq_clustered.h5ad",
+               sample=SAMPLES),
+        expand("results/fastq_analysis/{sample}/cluster_marker_genes.csv",
+               sample=SAMPLES),
+        expand("results/fastq_analysis/{sample}/umap_clusters.png",
+               sample=SAMPLES)
+
+rule validate_fastq:
+    input:
+        fastqs=lambda wc: sample_fastqs(wc.sample)
+    output:
+        touch("results/qc/{sample}/fastq_integrity.ok")
+    shell:
+        """
+        mkdir -p results/qc/{wildcards.sample}
+        gzip -t {input.fastqs}
+        touch {output}
+        """
+
+rule fastqc:
+    input:
+        fastqs=lambda wc: sample_fastqs(wc.sample),
+        integrity="results/qc/{sample}/fastq_integrity.ok"
+    output:
+        directory("results/fastqc/{sample}")
+    threads: THREADS
+    shell:
+        """
+        mkdir -p {output}
+        /usr/bin/fastqc --threads {threads} --outdir {output} {input.fastqs}
+        """
+
+rule multiqc:
+    input:
+        expand("results/fastqc/{sample}", sample=SAMPLES)
+    output:
+        "results/fastqc/multiqc/multiqc_report.html"
+    shell:
+        """
+        mkdir -p results/fastqc/multiqc
+        .venv-sc/bin/multiqc results/fastqc --outdir results/fastqc/multiqc --force
+        """
+
+rule quantify:
+    input:
+        fastqs=lambda wc: sample_fastqs(wc.sample),
+        index=INDEX,
+        t2g=T2G
+    output:
+        directory("results/quantification/{sample}")
+    threads: THREADS
+    resources:
+        mem_mb=2048
+    shell:
+        """
+        kb count -i {input.index} -g {input.t2g} \
+          -x {config[technology]} -t {threads} -m {MEMORY} \
+          --filter bustools -o {output} {input.fastqs}
+        """
+
+rule downstream_scanpy:
+    input:
+        matrix="results/quantification/{sample}/counts_filtered/cells_x_genes.mtx",
+        barcodes="results/quantification/{sample}/counts_filtered/cells_x_genes.barcodes.txt",
+        genes="results/quantification/{sample}/counts_filtered/cells_x_genes.genes.txt",
+        script="scripts/downstream_fastq.py"
+    output:
+        summary="results/fastq_analysis/{sample}/analysis_summary.txt",
+        h5ad="results/fastq_analysis/{sample}/pbmc_fastq_clustered.h5ad",
+        markers="results/fastq_analysis/{sample}/cluster_marker_genes.csv",
+        umap="results/fastq_analysis/{sample}/umap_clusters.png"
+    shell:
+        """
+        CELLSCOPE_MATRIX_DIR="results/quantification/{wildcards.sample}/counts_filtered" \
+        CELLSCOPE_OUTPUT_DIR="results/fastq_analysis/{wildcards.sample}" \
+        .venv-sc/bin/python {input.script}
+        """

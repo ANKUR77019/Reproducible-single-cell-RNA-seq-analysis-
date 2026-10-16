@@ -1,0 +1,6 @@
+fastq_dir: data/raw/fastq_small
+reference_index: data/reference/kb/human.idx
+transcript_to_gene: data/reference/kb/transcripts_to_genes.txt
+technology: 10XV3
+threads: 2
+memory: 2G

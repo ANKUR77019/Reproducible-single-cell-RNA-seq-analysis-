@@ -1,0 +1,2 @@
+sample	r1_l001	r2_l001	r1_l002	r2_l002
+PBMC_1K	subset_pbmc_1k_v3_S1_L001_R1_001.fastq.gz	subset_pbmc_1k_v3_S1_L001_R2_001.fastq.gz	subset_pbmc_1k_v3_S1_L002_R1_001.fastq.gz	subset_pbmc_1k_v3_S1_L002_R2_001.fastq.gz

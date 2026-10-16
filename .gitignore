@@ -1,0 +1,33 @@
+# Python environments and caches
+.venv/
+.venv-*/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Workflow temporary files and logs
+work/
+.nextflow/
+.nextflow.log*
+.snakemake/
+
+# Raw sequencing data and large reference files
+data/raw/
+data/reference/
+*.fastq
+*.fastq.gz
+*.fq
+*.fq.gz
+*.bam
+*.cram
+
+# Generated results; selectively add final results later if desired
+results/
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+
+# Local datasets and downloaded executable
+data/
+nextflow
