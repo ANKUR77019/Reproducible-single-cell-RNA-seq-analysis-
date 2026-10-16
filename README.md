@@ -1,153 +1,106 @@
-# CellScope
-### Single-cell RNA-seq analysis with Scanpy, Snakemake and Nextflow
+# CellScope: Reproducible Single-Cell RNA-seq Analysis
 
-CellScope is a practical bioinformatics project using PBMC single-cell RNA-seq data. It connects sequencing quality control, transcript quantification, cell-level analysis, clustering, marker-gene investigation and exploratory cell-type annotation in documented workflows.
+CellScope is a portfolio and learning project using public 10x Genomics
+healthy-donor PBMC single-cell RNA-seq data. It combines raw-read QC,
+barcode/UMI-aware quantification, Scanpy analysis and workflow
+automation with Snakemake and Nextflow.
 
-**Tools:** Python · Scanpy · AnnData · kb-python · FastQC · MultiQC · Snakemake · Nextflow
-
----
+**Dataset:** [10x Genomics --- 1k PBMCs from a Healthy Donor (v3
+chemistry)](https://www.10xgenomics.com/datasets/1-k-pbm-cs-from-a-healthy-donor-v-3-chemistry-3-standard-3-0-0).
+The source reference analysis reports 1,222 detected cells; the smaller
+counts below are results of our reanalysis, not the original
+dataset-wide result.
 
 ## Workflow
 
-```mermaid
-flowchart TD
-    A["Lane FASTQ files"] --> B["Input validation"]
-    B --> C["FastQC"]
-    C --> D["MultiQC report"]
-    B --> E["kb quantification"]
-    E --> F["Gene-by-cell matrix"]
-    F --> G["Scanpy analysis"]
-    G --> H["Cell QC and filtering"]
-    H --> I["Normalisation and HVGs"]
-    I --> J["UMAP and Leiden clustering"]
-    J --> K["Marker-gene analysis"]
-    K --> L["Exploratory cell-type annotation"]
-    K --> M["Pathway enrichment"]
-```
+1.  Validate sample metadata and expected FASTQs.
+2.  Run FastQC and aggregate reports with MultiQC.
+3.  Quantify with `kb-python` using the `10XV3` technology setting and
+    transcript-to-gene mapping.
+4.  Use Scanpy for cell-level QC, HVG selection, dimensionality
+    reduction, clustering and marker analysis.
+5.  Automate tasks with Snakemake and Nextflow.
 
-The repository contains two related but distinct branches: a matrix-based analysis with annotation and enrichment outputs, and a FASTQ-derived branch that performs quantification before downstream Scanpy analysis. Their cluster counts and outputs should not be conflated.
+## Dataset details
+
+Human PBMCs from one healthy donor, 10x Chromium Single Cell 3′ v3. Read
+1 contains a 16-base cell barcode and 12-base UMI; Read 2 contains
+transcript sequence. The FASTQ sample sheet represents one sample split
+across two sequencing lanes. Lanes are not biological replicates.
 
 ## Results
 
-### Cell-type annotation
+### FASTQ-derived branch
 
-![PBMC cell-type annotations](docs/images/results/cell-type-annotations.png)
+-   7,685,925 read pairs recorded across lane FASTQs.
+-   `kb-python` matrix: 263 barcodes, 39,546 gene rows, 514,014 non-zero
+    entries.
+-   Approximately 58.0% pseudoaligned and 14.6% uniquely pseudoaligned.
+-   262 cells retained after downstream QC.
+-   Median genes/cell: 1,785; median counts/UMIs per cell: 5,493; median
+    mitochondrial fraction: 10.73%.
+-   2,000 HVGs and 5 clusters.
 
-*Predicted PBMC cell-type labels from the matrix-based analysis. These annotations are computational predictions and should be interpreted with marker evidence.*
+Outputs are under `results/fastq_analysis/PBMC_1K/`; FastQC/MultiQC
+outputs are under `results/fastqc/`.
 
-### Unsupervised clusters
+### Separate matrix-based branch
 
-![Leiden clusters](docs/images/results/leiden-clusters.png)
+An earlier branch used a pre-existing matrix and has a different
+processing history: 713 cells before filtering, 567 retained cells,
+33,538 genes in filtered AnnData, 2,000 HVGs and 7 clusters (165, 139,
+91, 79, 39, 30 and 24 cells). The full marker table contained 234,766
+rows and the pathway output contained 1,873 rows.
 
-*Leiden cluster structure before biological labels are assigned.*
+**Do not merge these branches into one result.** Pathway row count does
+not establish the number of unique pathways; verify the enrichment
+method, gene background and multiple-testing cutoff before
+interpretation.
 
-### Marker-gene analysis
+## Figures
 
-![Marker gene analysis](docs/images/results/marker-gene-analysis.png)
+Place generated figures in `docs/images/`, commit them to Git, and
+ensure these paths match actual filenames before embedding images.
+Example:
 
-*Marker-gene visualisation generated during the matrix-based analysis.*
-
-### Cell-level quality control
-
-![Cell QC distributions](docs/images/results/cell-quality-control.png)
-
-*Distributions used to inspect cell-level quality metrics.*
-
-### FASTQ-derived clustering
-
-![FASTQ-derived clusters](docs/images/results/fastq-derived-clusters.png)
-
-*UMAP from the FASTQ-derived branch. The current run retained 262 cells, selected 2,000 highly variable genes and identified five clusters.*
-
-## Main outputs
-
-| Stage | Outputs |
-|---|---|
-| Sequencing QC | FastQC reports and MultiQC HTML report |
-| Quantification | Filtered gene-by-cell count matrix |
-| Cell QC | Per-cell metrics and QC summaries |
-| Clustering | AnnData object and UMAP |
-| Marker analysis | Cluster marker tables |
-| Interpretation | Candidate cell-type annotations and pathway tables |
-
-## Run the workflows
-
-### Snakemake
-
-```bash
-snakemake -s workflow/snakemake/Snakefile --cores 2 -n
-snakemake -s workflow/snakemake/Snakefile --cores 2
+``` markdown
+![FASTQ-derived clusters](docs/images/fastq_umap_clusters.png)
 ```
 
-### Nextflow
+A README image path will be broken on GitHub if the corresponding file
+is not committed at that path.
 
-```bash
-./nextflow run workflow/nextflow/main.nf -preview
-./nextflow run workflow/nextflow/main.nf --reuse_quant true -resume
-```
+## Workflow automation
 
-The Nextflow reuse option depends on the existing project paths and configuration. Check the sample sheet and reference settings before adapting the workflow to another dataset.
+The recorded Nextflow run on 16 October 2026 completed `VALIDATE_FASTQ`,
+`FASTQC`, `MULTIQC`, `QUANTIFY` and `DOWNSTREAM_SCANPY` in 14 minutes 18
+seconds; three processes succeeded and two were cached. Do not claim
+quantification was skipped by `--reuse_quant true`, because `QUANTIFY`
+appeared as completed in the run.
 
-## Project structure
+## Limitations and reproducibility
 
-```text
-CellScope/
-├── config/                 # Sample sheet and parameters
-├── scripts/                # QC, Scanpy, markers and enrichment
-├── workflow/
-│   ├── snakemake/          # Snakemake workflow
-│   └── nextflow/           # Nextflow workflow
-├── docs/images/
-│   ├── results/            # Selected scientific figures
-│   └── proof/              # Selected terminal evidence
-└── README.md
-```
+-   One healthy donor: no biological replication for population-level
+    inference.
+-   The FASTQ branch is a subset/reanalysis; it retained 262 cells,
+    whereas the official reference analysis reports 1,222.
+-   Clustering depends on input, filtering, features and
+    graph/clustering parameters; UMAP is visualisation, not a
+    statistical test.
+-   Exact reference/index release, software versions, QC cutoffs, marker
+    tests and pathway-enrichment parameters should be documented from
+    the actual project files before claiming full reproducibility.
+-   Raw data and large generated outputs may be excluded from Git;
+    document how to obtain inputs and regenerate outputs.
 
-## Terminal evidence
+## Detailed revision guide
 
-The following captures document different stages of the work. They supplement the scripts and outputs; screenshots alone do not establish reproducibility.
+See [`docs/INTERVIEW_GUIDE.md`](docs/INTERVIEW_GUIDE.md) for the
+step-by-step explanation, statistics, troubleshooting, limitations and
+28 likely interview questions with model answers.
 
-<details>
-<summary><strong>Open implementation evidence (6 screenshots)</strong></summary>
+## Source and license
 
-### 1. Canonical marker validation
-
-![Marker validation terminal output](docs/images/proof/01-marker-validation.png)
-
-### 2. Pathway analysis
-
-![Pathway analysis terminal output](docs/images/proof/02-pathway-analysis.png)
-
-### 3. Analysis summary
-
-![Analysis summary terminal output](docs/images/proof/03-analysis-summary.png)
-
-*This capture belongs to the matrix-based branch; the FASTQ-derived branch has its own output summary.*
-
-### 4. FASTQ validation and QC
-
-![FASTQ quality control terminal output](docs/images/proof/04-fastq-quality-control.png)
-
-### 5. Generated results
-
-![Generated analysis files](docs/images/proof/05-generated-results.png)
-
-### 6. Successful Nextflow run
-
-![Nextflow successful completion](docs/images/proof/06-nextflow-success.png)
-
-*Shows successful completion of validation, FastQC, MultiQC, quantification and downstream Scanpy.*
-
-</details>
-
-## Reproducibility notes
-
-- Parameters and sample information are stored in `config/`.
-- The workflows and analysis scripts are version-controlled.
-- Raw data, local environments, temporary files and generated results are excluded from the main Git repository.
-- Cell-type labels and pathway enrichment are exploratory interpretations, not definitive biological conclusions.
-- Reference provenance and software versions should be recorded when reproducing the analysis in a clean environment.
-
-## Author
-
-**Ankur Kumar** · Bioinformatics · Single-cell genomics · NGS workflow automation
+10x Genomics, [1k PBMCs from a Healthy Donor (v3
+chemistry)](https://www.10xgenomics.com/datasets/1-k-pbm-cs-from-a-healthy-donor-v-3-chemistry-3-standard-3-0-0).
+The source page lists CC BY 4.0; retain attribution.
