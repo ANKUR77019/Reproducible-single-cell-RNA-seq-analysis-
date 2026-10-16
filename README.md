@@ -184,3 +184,104 @@ The `-resume` option allows Nextflow to reuse eligible cached tasks. The reuse-q
 Ankur Kumar
 
 Bioinformatics | Single-Cell Genomics | NGS Workflow Automation
+
+
+---
+
+## Results at a glance
+
+These figures are taken from the analyses in this repository. The matrix-based
+analysis and the FASTQ-derived analysis are shown separately because they are
+distinct processing branches.
+
+### Cell-type annotations
+
+![Cell-type annotations](docs/images/results/umap-cell-types.png)
+
+*UMAP from the matrix-based analysis, coloured by predicted cell type.*
+
+### Cluster structure
+
+![Cluster structure](docs/images/results/umap-clusters.png)
+
+*Cluster-level UMAP from the matrix-based analysis.*
+
+### Marker-gene analysis
+
+![Marker-gene analysis](docs/images/results/marker-genes.png)
+
+*Marker-gene visualisation generated during the analysis.*
+
+### Cell quality control
+
+![Cell quality control](docs/images/results/qc-distributions.png)
+
+*Quality-control distributions used to inspect cell-level metrics.*
+
+### FASTQ-derived analysis
+
+![FASTQ-derived analysis](docs/images/results/fastq-derived-umap.png)
+
+*UMAP produced by the FASTQ-to-count-matrix analysis branch.*
+
+
+## Workflow evidence
+
+The screenshots below are terminal captures from the project setup and analysis.
+They are included as development evidence; the scripts and workflow files remain
+the source of truth for reproducing the work.
+
+<details>
+<summary>View terminal screenshots</summary>
+
+### Terminal capture — 08:07:32
+
+<img src="docs/images/terminal/terminal-01-080732.png" alt="Terminal screenshot captured on 16 October 2026 at 08-07-32" width="900" />
+
+### Terminal capture — 08:16:01
+
+<img src="docs/images/terminal/terminal-02-081601.png" alt="Terminal screenshot captured on 16 October 2026 at 08-16-01" width="900" />
+
+### Terminal capture — 08:17:30
+
+<img src="docs/images/terminal/terminal-03-081730.png" alt="Terminal screenshot captured on 16 October 2026 at 08-17-30" width="900" />
+
+### Terminal capture — 08:19:51
+
+<img src="docs/images/terminal/terminal-04-081951.png" alt="Terminal screenshot captured on 16 October 2026 at 08-19-51" width="900" />
+
+### Terminal capture — 08:21:59
+
+<img src="docs/images/terminal/terminal-05-082159.png" alt="Terminal screenshot captured on 16 October 2026 at 08-21-59" width="900" />
+
+### Terminal capture — 08:22:20
+
+<img src="docs/images/terminal/terminal-06-082220.png" alt="Terminal screenshot captured on 16 October 2026 at 08-22-20" width="900" />
+
+### Terminal capture — 09:51:30
+
+<img src="docs/images/terminal/terminal-07-095130.png" alt="Terminal screenshot captured on 16 October 2026 at 09-51-30" width="900" />
+
+### Terminal capture — 10:12:07
+
+<img src="docs/images/terminal/terminal-08-101207.png" alt="Terminal screenshot captured on 16 October 2026 at 10-12-07" width="900" />
+
+### Terminal capture — 12:17:58
+
+<img src="docs/images/terminal/terminal-09-121758.png" alt="Terminal screenshot captured on 16 October 2026 at 12-17-58" width="900" />
+
+### Terminal capture — 12:19:23
+
+<img src="docs/images/terminal/terminal-10-121923.png" alt="Terminal screenshot captured on 16 October 2026 at 12-19-23" width="900" />
+
+### Terminal capture — 12:39:21
+
+<img src="docs/images/terminal/terminal-11-123921.png" alt="Terminal screenshot captured on 16 October 2026 at 12-39-21" width="900" />
+
+### Terminal capture — 13:00:58
+
+<img src="docs/images/terminal/terminal-12-130058.png" alt="Terminal screenshot captured on 16 October 2026 at 13-00-58" width="900" />
+
+</details>
+
+<!-- CELLSCOPE_VISUAL_GALLERY -->
